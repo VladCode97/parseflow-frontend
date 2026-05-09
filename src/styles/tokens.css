@@ -1,0 +1,71 @@
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap');
+
+:root {
+  --font-sans: 'Satoshi', system-ui, -apple-system, sans-serif;
+
+  --color-primary: #00D26A;
+  --color-primary-hover: #00b85e;
+  --color-primary-light: rgba(0, 210, 106, 0.12);
+  --color-primary-subtle: rgba(0, 210, 106, 0.06);
+  --color-primary-text: #007a3d;
+
+  --color-navy: #1B2B3A;
+  --color-navy-mid: #2d4459;
+  --color-navy-light: #3d5a73;
+
+  --color-bg: #f0f2ef;
+  --color-surface: #ffffff;
+  --color-surface-raised: #f7f8f6;
+  --color-surface-overlay: #eef0ed;
+  --color-border: rgba(27, 43, 58, 0.1);
+  --color-border-strong: rgba(27, 43, 58, 0.18);
+
+  --color-text-primary: #1B2B3A;
+  --color-text-secondary: #4a6070;
+  --color-text-tertiary: #7a95a5;
+  --color-text-inverse: #ffffff;
+
+  --color-success: #00b85e;
+  --color-success-bg: rgba(0, 210, 106, 0.1);
+  --color-warning: #f59e0b;
+  --color-warning-bg: rgba(245, 158, 11, 0.1);
+  --color-error: #ef4444;
+  --color-error-bg: rgba(239, 68, 68, 0.08);
+  --color-info: #3b82f6;
+  --color-info-bg: rgba(59, 130, 246, 0.1);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 3px rgba(27, 43, 58, 0.08), 0 1px 2px rgba(27, 43, 58, 0.04);
+  --shadow-md: 0 4px 12px rgba(27, 43, 58, 0.1), 0 2px 4px rgba(27, 43, 58, 0.06);
+  --shadow-lg: 0 8px 24px rgba(27, 43, 58, 0.12), 0 4px 8px rgba(27, 43, 58, 0.06);
+
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+
+  --transition-fast: 120ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  --panel-left: 280px;
+  --panel-right: 320px;
+}
