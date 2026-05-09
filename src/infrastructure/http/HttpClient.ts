@@ -1,4 +1,10 @@
-const BASE_URL = import.meta.env['VITE_API_URL'] ?? 'http://127.0.0.1:8000';
+const BASE_URL: string = (() => {
+  try {
+    return (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL ?? 'http://127.0.0.1:8000';
+  } catch {
+    return 'http://127.0.0.1:8000';
+  }
+})();
 
 export class HttpError extends Error {
   constructor(
