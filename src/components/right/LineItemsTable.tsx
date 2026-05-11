@@ -6,23 +6,24 @@ interface LineItemsTableProps {
 }
 
 const TH: React.CSSProperties = {
-  padding: '8px 10px',
-  fontSize: 'var(--text-xs)',
+  padding: '7px 10px',
+  fontSize: 10,
   fontWeight: 700,
   color: 'var(--color-text-tertiary)',
   textTransform: 'uppercase',
-  letterSpacing: '0.06em',
+  letterSpacing: '0.05em',
   backgroundColor: 'var(--color-surface-raised)',
   borderBottom: '1px solid var(--color-border)',
-  textAlign: 'left',
   whiteSpace: 'nowrap',
+  textAlign: 'left',
 };
 
 const TD: React.CSSProperties = {
-  padding: '8px 10px',
+  padding: '7px 10px',
   fontSize: 'var(--text-xs)',
   color: 'var(--color-text-primary)',
   borderBottom: '1px solid var(--color-border)',
+  whiteSpace: 'nowrap',
   textAlign: 'left',
 };
 
@@ -34,13 +35,16 @@ function getScoreColor(confidence: number): string {
 
 export const LineItemsTable = React.memo(function LineItemsTable({ items }: LineItemsTableProps) {
   return (
-    <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }} aria-label="Line items">
+    <div style={{ overflowX: 'auto', overflowY: 'visible' }}>
+      <table
+        style={{ borderCollapse: 'collapse', minWidth: '100%' }}
+        aria-label="Line items"
+      >
         <thead>
           <tr>
             <th scope="col" style={TH}>#</th>
             <th scope="col" style={TH}>SKU</th>
-            <th scope="col" style={TH}>Description</th>
+            <th scope="col" style={{ ...TH, minWidth: 140 }}>Description</th>
             <th scope="col" style={{ ...TH, textAlign: 'right' }}>Qty</th>
             <th scope="col" style={{ ...TH, textAlign: 'right' }}>Tax</th>
             <th scope="col" style={{ ...TH, textAlign: 'right' }}>Price</th>
@@ -54,18 +58,12 @@ export const LineItemsTable = React.memo(function LineItemsTable({ items }: Line
               <td style={{ ...TD, color: 'var(--color-text-tertiary)', fontWeight: 600 }}>
                 {item.index.toString().padStart(2, '0')}
               </td>
-              <td style={{ ...TD, color: 'var(--color-text-tertiary)', fontFamily: 'monospace', fontSize: 11 }}>
+              <td style={{ ...TD, color: 'var(--color-text-tertiary)', fontFamily: 'monospace', fontSize: 10 }}>
                 {item.sku}
               </td>
               <td
-                style={{
-                  ...TD,
-                  fontWeight: 500,
-                  maxWidth: 120,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
+                style={{ ...TD, fontWeight: 500, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}
+                title={item.description}
               >
                 {item.description}
               </td>
@@ -76,7 +74,7 @@ export const LineItemsTable = React.memo(function LineItemsTable({ items }: Line
               <td style={{ ...TD, textAlign: 'right' }}>{item.unitPrice.toFixed(2)}</td>
               <td style={{ ...TD, textAlign: 'right', fontWeight: 700 }}>{item.total.toFixed(2)}</td>
               <td style={{ ...TD, textAlign: 'right' }}>
-                <span style={{ color: getScoreColor(item.confidence), fontWeight: 700 }}>
+                <span style={{ color: getScoreColor(item.confidence), fontWeight: 700, fontSize: 10 }}>
                   {item.confidence.toFixed(2)}
                 </span>
               </td>

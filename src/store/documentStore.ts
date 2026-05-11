@@ -52,8 +52,7 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
     });
     doc = updateDocumentStatus(doc, 'queued');
     repository.save(doc);
-    sync(set);
-    if (!get().selectedId) set({ selectedId: id });
+    set({ documents: repository.findAll(), selectedId: id });
 
     doc = updateDocumentStatus(doc, 'processing');
     repository.save(doc);
@@ -82,8 +81,7 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
     let doc = createDocument(id, { type: 'url', value: sanitized, name, mimeType: 'image/jpeg' });
     doc = updateDocumentStatus(doc, 'queued');
     repository.save(doc);
-    sync(set);
-    if (!get().selectedId) set({ selectedId: id });
+    set({ documents: repository.findAll(), selectedId: id });
 
     doc = updateDocumentStatus(doc, 'processing');
     repository.save(doc);

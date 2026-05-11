@@ -5,17 +5,12 @@ import { Badge } from '@/components/base/Badge';
 interface ProcessingStatusProps {
   status: DocumentStatus;
   errorMessage: string | null;
-  fieldCount: number;
-  validatedCount: number;
 }
 
 export const ProcessingStatus = React.memo(function ProcessingStatus({
   status,
   errorMessage,
-  fieldCount,
-  validatedCount,
 }: ProcessingStatusProps) {
-  const progress = fieldCount > 0 ? (validatedCount / fieldCount) * 100 : 0;
 
   return (
     <div
@@ -59,49 +54,6 @@ export const ProcessingStatus = React.memo(function ProcessingStatus({
         >
           {errorMessage}
         </p>
-      )}
-
-      {status === 'completed' && fieldCount > 0 && (
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
-              Validation progress
-            </span>
-            <span
-              style={{
-                fontSize: 'var(--text-xs)',
-                fontWeight: 700,
-                color: 'var(--color-text-primary)',
-              }}
-            >
-              {validatedCount}/{fieldCount}
-            </span>
-          </div>
-          <div
-            role="progressbar"
-            aria-valuenow={Math.round(progress)}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={`Validation progress: ${Math.round(progress)}%`}
-            style={{
-              height: 6,
-              borderRadius: 'var(--radius-full)',
-              backgroundColor: 'var(--color-surface-overlay)',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              style={{
-                width: `${progress}%`,
-                height: '100%',
-                backgroundColor:
-                  progress === 100 ? 'var(--color-primary)' : 'var(--color-navy)',
-                borderRadius: 'var(--radius-full)',
-                transition: 'width var(--transition-slow)',
-              }}
-            />
-          </div>
-        </div>
       )}
     </div>
   );

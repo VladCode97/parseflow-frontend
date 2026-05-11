@@ -105,7 +105,10 @@ export const UploadZone = React.memo(function UploadZone({ onError }: UploadZone
         accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
         aria-label="File upload input"
         style={{ display: 'none' }}
-        onChange={(e) => handleFiles(e.target.files)}
+        onChange={(e) => {
+          handleFiles(e.target.files);
+          e.target.value = '';
+        }}
       />
 
       <div style={{ display: 'flex', gap: 'var(--space-2)' }}>

@@ -16,6 +16,36 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function FileTypeBadge({ mimeType }: { mimeType?: string }) {
+  const isPdf = mimeType === 'application/pdf';
+  const isImage = mimeType?.startsWith('image/') ?? false;
+  const ext = isPdf ? 'PDF' : isImage ? mimeType?.split('/')[1]?.toUpperCase() ?? 'IMG' : 'DOC';
+  const color = isPdf ? '#ef4444' : isImage ? 'var(--color-navy)' : 'var(--color-text-tertiary)';
+
+  return (
+    <div
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: 'var(--radius-sm)',
+        backgroundColor: 'var(--color-surface-overlay)',
+        border: '1px solid var(--color-border)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        gap: 1,
+      }}
+    >
+      <IconDocument size={14} color={color} />
+      <span style={{ fontSize: 8, fontWeight: 700, color, letterSpacing: '0.02em', lineHeight: 1 }}>
+        {ext}
+      </span>
+    </div>
+  );
+}
+
 export const DocumentQueueItem = React.memo(function DocumentQueueItem({
   document,
   isSelected,
@@ -51,32 +81,7 @@ export const DocumentQueueItem = React.memo(function DocumentQueueItem({
         transition: 'all var(--transition-fast)',
       }}
     >
-      <div
-        aria-hidden="true"
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 'var(--radius-sm)',
-          backgroundColor: 'var(--color-surface-overlay)',
-          border: '1px solid var(--color-border)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 16,
-          flexShrink: 0,
-          overflow: 'hidden',
-        }}
-      >
-        {document.previewUrl ? (
-          <img
-            src={document.previewUrl}
-            alt=""
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        ) : (
-          <IconDocument size={18} color="var(--color-text-tertiary)" />
-        )}
-      </div>
+      <FileTypeBadge mimeType={document.source.mimeType} />
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <p

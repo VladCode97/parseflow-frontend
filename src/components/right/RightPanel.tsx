@@ -113,8 +113,6 @@ export const RightPanel = React.memo(function RightPanel() {
           <ProcessingStatus
             status={selectedDocument.status}
             errorMessage={selectedDocument.errorMessage}
-            fieldCount={fieldCount}
-            validatedCount={validatedCount}
           />
 
           {selectedDocument.extraction && (
@@ -173,6 +171,7 @@ export const RightPanel = React.memo(function RightPanel() {
                         overflow: 'hidden',
                         border: '1px solid var(--color-border)',
                         backgroundColor: 'var(--color-surface)',
+                        overflowX: 'auto',
                       }}
                     >
                       <LineItemsTable items={selectedDocument.extraction.lineItems} />

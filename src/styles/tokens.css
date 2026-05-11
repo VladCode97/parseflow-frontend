@@ -66,6 +66,6 @@
   --transition-base: 200ms ease;
   --transition-slow: 300ms ease;
 
-  --panel-left: 280px;
-  --panel-right: 320px;
+  --panel-left: 240px;
+  --panel-right: 460px;
 }
