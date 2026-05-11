@@ -16,9 +16,13 @@ const repository = new InMemoryDocumentRepository();
 const processor = new ApiDocumentProcessor();
 const removeUseCase = new RemoveDocumentUseCase(repository);
 
+const activeControllers = new Map<DocumentId, AbortController>();
+const objectUrls = new Map<DocumentId, string>();
+
 interface DocumentStoreState {
   documents: Document[];
   selectedId: DocumentId | null;
+  processingCount: number;
 
   selectDocument: (id: DocumentId | null) => void;
   uploadFile: (file: File) => Promise<void>;
@@ -28,12 +32,24 @@ interface DocumentStoreState {
 }
 
 function sync(set: (partial: Partial<DocumentStoreState>) => void) {
-  set({ documents: repository.findAll() });
+  const docs = repository.findAll();
+  const processing = docs.filter(d => d.status === 'processing' || d.status === 'queued').length;
+  set({ documents: docs, processingCount: processing });
+}
+
+function detectMimeFromUrl(url: string): string {
+  const clean = (url.split('?')[0] ?? '').toLowerCase();
+  if (clean.endsWith('.pdf')) return 'application/pdf';
+  if (clean.endsWith('.png')) return 'image/png';
+  if (clean.endsWith('.webp')) return 'image/webp';
+  if (clean.endsWith('.gif')) return 'image/gif';
+  return 'image/jpeg';
 }
 
 export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
   documents: [],
   selectedId: null,
+  processingCount: 0,
 
   selectDocument: (id) => set({ selectedId: id }),
 
@@ -42,6 +58,10 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
 
     const id = generateId();
     const objectUrl = URL.createObjectURL(file);
+    objectUrls.set(id, objectUrl);
+
+    const controller = new AbortController();
+    activeControllers.set(id, controller);
 
     let doc = createDocument(id, {
       type: 'file',
@@ -52,7 +72,7 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
     });
     doc = updateDocumentStatus(doc, 'queued');
     repository.save(doc);
-    set({ documents: repository.findAll(), selectedId: id });
+    set({ documents: repository.findAll(), selectedId: id, processingCount: get().processingCount + 1 });
 
     doc = updateDocumentStatus(doc, 'processing');
     repository.save(doc);
@@ -61,13 +81,16 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
     try {
       const base64 = await fileToBase64(file);
       const sourceWithBase64 = { ...doc.source, base64 };
-      const result = await processor.process({ source: sourceWithBase64 });
+      const result = await processor.process({ source: sourceWithBase64, signal: controller.signal });
       doc = updateDocumentExtraction(doc, result.extraction, result.previewUrl);
       repository.save(doc);
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       const message = err instanceof Error ? err.message : 'Processing failed';
       doc = updateDocumentStatus(doc, 'failed', message);
       repository.save(doc);
+    } finally {
+      activeControllers.delete(id);
     }
 
     sync(set);
@@ -76,33 +99,50 @@ export const useDocumentStore = create<DocumentStoreState>((set, get) => ({
   uploadUrl: async (url: string) => {
     const sanitized = sanitizeUrl(url);
     const name = sanitized.split('/').pop()?.split('?')[0] ?? 'document';
+    const mimeType = detectMimeFromUrl(sanitized);
     const id = generateId();
 
-    let doc = createDocument(id, { type: 'url', value: sanitized, name, mimeType: 'image/jpeg' });
+    const controller = new AbortController();
+    activeControllers.set(id, controller);
+
+    let doc = createDocument(id, { type: 'url', value: sanitized, name, mimeType });
     doc = updateDocumentStatus(doc, 'queued');
     repository.save(doc);
-    set({ documents: repository.findAll(), selectedId: id });
+    set({ documents: repository.findAll(), selectedId: id, processingCount: get().processingCount + 1 });
 
     doc = updateDocumentStatus(doc, 'processing');
     repository.save(doc);
     sync(set);
 
     try {
-      const result = await processor.process({ source: doc.source });
+      const result = await processor.process({ source: doc.source, signal: controller.signal });
       doc = updateDocumentExtraction(doc, result.extraction, result.previewUrl);
       repository.save(doc);
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       const message = err instanceof Error ? err.message : 'Processing failed';
       doc = updateDocumentStatus(doc, 'failed', message);
       repository.save(doc);
+    } finally {
+      activeControllers.delete(id);
     }
 
     sync(set);
   },
 
   removeDocument: (id: DocumentId) => {
+    activeControllers.get(id)?.abort();
+    activeControllers.delete(id);
+
+    const objectUrl = objectUrls.get(id);
+    if (objectUrl) {
+      URL.revokeObjectURL(objectUrl);
+      objectUrls.delete(id);
+    }
+
     removeUseCase.execute(id);
     sync(set);
+
     if (get().selectedId === id) {
       const remaining = repository.findAll();
       set({ selectedId: remaining[0]?.id ?? null });

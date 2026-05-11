@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Button } from '@/components/base/Button';
-import { IconUpload, IconDocument } from '../base/Icons';
+import { IconUpload } from '../base/Icons';
 import { useDocumentStore } from '@/store/documentStore';
 
 interface UploadZoneProps {
@@ -11,72 +11,68 @@ export const UploadZone = React.memo(function UploadZone({ onError }: UploadZone
   const [isDragging, setIsDragging] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const [isUrlMode, setIsUrlMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { uploadFile, uploadUrl } = useDocumentStore();
+  const { uploadFile, uploadUrl, processingCount } = useDocumentStore();
+
+  const isProcessing = processingCount > 0;
 
   const handleFiles = useCallback(
     async (files: FileList | null) => {
-      if (!files?.length) return;
+      if (!files?.length || isProcessing) return;
       const file = files[0];
       if (!file) return;
-      setIsLoading(true);
       try {
         await uploadFile(file);
       } catch (err) {
         onError(err instanceof Error ? err.message : 'Upload failed');
-      } finally {
-        setIsLoading(false);
       }
     },
-    [uploadFile, onError],
+    [uploadFile, onError, isProcessing],
   );
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       setIsDragging(false);
-      handleFiles(e.dataTransfer.files);
+      if (!isProcessing) handleFiles(e.dataTransfer.files);
     },
-    [handleFiles],
+    [handleFiles, isProcessing],
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragging(true);
-  }, []);
+    if (!isProcessing) setIsDragging(true);
+  }, [isProcessing]);
 
   const handleDragLeave = useCallback(() => setIsDragging(false), []);
 
   const handleUrlSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!urlInput.trim()) return;
-      setIsLoading(true);
+      if (!urlInput.trim() || isProcessing) return;
       try {
         await uploadUrl(urlInput.trim());
         setUrlInput('');
         setIsUrlMode(false);
       } catch (err) {
         onError(err instanceof Error ? err.message : 'Invalid URL');
-      } finally {
-        setIsLoading(false);
       }
     },
-    [urlInput, uploadUrl, onError],
+    [urlInput, uploadUrl, onError, isProcessing],
   );
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
       <div
         role="button"
-        tabIndex={0}
+        tabIndex={isProcessing ? -1 : 0}
         aria-label="Drop files here or click to upload"
-        onClick={() => !isUrlMode && fileInputRef.current?.click()}
+        aria-disabled={isProcessing}
+        onClick={() => !isUrlMode && !isProcessing && fileInputRef.current?.click()}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
+        onKeyDown={(e) => e.key === 'Enter' && !isProcessing && fileInputRef.current?.click()}
         style={{
           border: `2px dashed ${isDragging ? 'var(--color-primary)' : 'var(--color-border-strong)'}`,
           borderRadius: 'var(--radius-lg)',
@@ -85,17 +81,19 @@ export const UploadZone = React.memo(function UploadZone({ onError }: UploadZone
           flexDirection: 'column',
           alignItems: 'center',
           gap: 'var(--space-2)',
-          cursor: 'pointer',
+          cursor: isProcessing ? 'not-allowed' : 'pointer',
+          opacity: isProcessing ? 0.5 : 1,
           backgroundColor: isDragging ? 'var(--color-primary-subtle)' : 'var(--color-surface-raised)',
           transition: 'all var(--transition-base)',
+          userSelect: 'none',
         }}
       >
         <IconUpload size={22} color={isDragging ? 'var(--color-primary)' : 'var(--color-text-tertiary)'} />
         <p style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>
-          Drop files here
+          {isProcessing ? 'Processing...' : 'Drop files here'}
         </p>
         <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)', margin: 0 }}>
-          JPEG, PNG, WebP, PDF
+          {isProcessing ? 'Wait until current document finishes' : 'JPEG, PNG, WebP, PDF'}
         </p>
       </div>
 
@@ -104,6 +102,7 @@ export const UploadZone = React.memo(function UploadZone({ onError }: UploadZone
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
         aria-label="File upload input"
+        disabled={isProcessing}
         style={{ display: 'none' }}
         onChange={(e) => {
           handleFiles(e.target.files);
@@ -116,8 +115,8 @@ export const UploadZone = React.memo(function UploadZone({ onError }: UploadZone
           variant="outline"
           size="sm"
           style={{ flex: 1 }}
-          onClick={() => fileInputRef.current?.click()}
-          loading={isLoading && !isUrlMode}
+          onClick={() => !isProcessing && fileInputRef.current?.click()}
+          disabled={isProcessing}
           aria-label="Browse files"
         >
           Browse files
@@ -126,7 +125,8 @@ export const UploadZone = React.memo(function UploadZone({ onError }: UploadZone
           variant={isUrlMode ? 'navy' : 'outline'}
           size="sm"
           style={{ flex: 1 }}
-          onClick={() => setIsUrlMode(v => !v)}
+          onClick={() => !isProcessing && setIsUrlMode(v => !v)}
+          disabled={isProcessing}
           aria-label="Toggle URL input"
           aria-expanded={isUrlMode}
         >
@@ -145,6 +145,7 @@ export const UploadZone = React.memo(function UploadZone({ onError }: UploadZone
             onChange={(e) => setUrlInput(e.target.value)}
             placeholder="https://example.com/image.jpg"
             aria-label="Image URL"
+            disabled={isProcessing}
             autoFocus
             style={{
               width: '100%',
@@ -157,14 +158,14 @@ export const UploadZone = React.memo(function UploadZone({ onError }: UploadZone
               fontFamily: 'var(--font-sans)',
               outline: 'none',
               boxSizing: 'border-box',
+              opacity: isProcessing ? 0.5 : 1,
             }}
           />
           <Button
             type="submit"
             variant="primary"
             size="sm"
-            loading={isLoading && isUrlMode}
-            disabled={!urlInput.trim()}
+            disabled={!urlInput.trim() || isProcessing}
           >
             Process URL
           </Button>
